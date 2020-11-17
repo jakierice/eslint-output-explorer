@@ -5,8 +5,9 @@ import * as Eq from "fp-ts/lib/Eq"
 import * as O from "fp-ts/lib/Option"
 import * as A from "fp-ts/lib/Array"
 import * as D from "io-ts/lib/Decoder"
-import eslintOutput from "./data/eslint-output.json"
 import { constant, flow, identity, pipe } from "fp-ts/lib/function"
+
+import eslintOutput from "./data/eslint-output.json"
 
 /* Note: the following types are based on the ESLint dev docs for working with
  * custom formatters found at: https://eslint.org/docs/developer-guide/working-with-custom-formatters
@@ -22,8 +23,6 @@ const esLintResultMessageD = D.partial({
   endLine: D.number,
   endColumn: D.number,
 })
-
-// type ESLintResultMessage = D.TypeOf<typeof eslintMessageSeverityD>
 
 const eslintResultD = D.array(
   pipe(
@@ -94,7 +93,11 @@ function App() {
                           A.flatten,
                           A.filter((s) => s !== ""),
                           A.uniq(Eq.eqString),
-                          A.map((filePath) => <li>{filePath}</li>)
+                          A.map((filePath) => (
+                            <a href={"vscode://file" + filePath}>
+                              <li>{filePath}</li>
+                            </a>
+                          ))
                         )}
                       </ul>
                     </details>
