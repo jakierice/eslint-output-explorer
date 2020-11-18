@@ -66,10 +66,17 @@ function renderGroupedFailuresList(data: ESLintResult) {
                     pipe(
                       r,
                       ({ messages }) => O.fromNullable(messages),
-                      O.map(
-                        A.filterMap(({ ruleId }) => O.fromNullable(ruleId))
-                      ),
-                      O.fold(constant(A.empty), identity)
+                      O.fold(
+                        constant(A.empty),
+                        A.filterMap(
+                          flow(
+                            ({ ruleId }) => O.fromNullable(ruleId),
+                            O.chain((id) =>
+                              id === rule ? O.some(r.filePath) : O.none
+                            )
+                          )
+                        )
+                      )
                     )
                   ),
                   A.flatten,
