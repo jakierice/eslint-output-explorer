@@ -57,33 +57,31 @@ function renderGroupedFailuresList(data: ESLintResult) {
           A.flatten,
           A.uniq(Eq.eqString),
           A.map((rule) => (
-            <>
-              <details key={rule}>
-                <summary>{rule}</summary>
-                <ul>
-                  {pipe(
-                    result,
-                    A.map((r) =>
-                      pipe(
-                        r,
-                        ({ messages }) => O.fromNullable(messages),
-                        O.map(
-                          A.filterMap(({ ruleId }) => O.fromNullable(ruleId))
-                        ),
-                        O.fold(constant(A.empty), identity)
-                      )
-                    ),
-                    A.flatten,
-                    A.uniq(Eq.eqString),
-                    A.map((filePath) => (
-                      <a href={"vscode://file" + filePath} key={filePath}>
-                        <li>{filePath}</li>
-                      </a>
-                    ))
-                  )}
-                </ul>
-              </details>
-            </>
+            <details key={rule}>
+              <summary>{rule}</summary>
+              <ul>
+                {pipe(
+                  result,
+                  A.map((r) =>
+                    pipe(
+                      r,
+                      ({ messages }) => O.fromNullable(messages),
+                      O.map(
+                        A.filterMap(({ ruleId }) => O.fromNullable(ruleId))
+                      ),
+                      O.fold(constant(A.empty), identity)
+                    )
+                  ),
+                  A.flatten,
+                  A.uniq(Eq.eqString),
+                  A.map((filePath) => (
+                    <a href={"vscode://file" + filePath} key={filePath}>
+                      <li>{filePath}</li>
+                    </a>
+                  ))
+                )}
+              </ul>
+            </details>
           ))
         )}
       </>
