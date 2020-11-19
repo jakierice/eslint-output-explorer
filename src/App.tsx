@@ -1,6 +1,16 @@
 import './App.css'
 import React from 'react'
-import { constant, flow, identity, pipe, E, Eq, O, A, D } from './fp-ts-exports'
+import {
+  constant,
+  flow,
+  identity,
+  pipe,
+  E,
+  Eq,
+  O,
+  A,
+  D,
+} from './fp-ts-exports'
 
 import eslintOutput from './data/eslint-output.json'
 
@@ -113,6 +123,12 @@ function ESLintFailuresList(result: ESLintResult) {
   )
 }
 
+function ESLintResultDecodeErrorMessage(decodeErrors: D.DecodeError) {
+  return pipe(decodeErrors, D.draw, (e) => [
+    <p>{e.split('}]').reverse()[0]}</p>,
+  ])
+}
+
 export function App() {
   return (
     <div className="App">
@@ -120,11 +136,7 @@ export function App() {
         eslintOutput,
         eslintResultD.decode,
         E.map(ESLintFailuresList),
-        E.getOrElse((decodeErrors) =>
-          pipe(decodeErrors, D.draw, (e) => [
-            <p>{e.split('}]').reverse()[0]}</p>,
-          ]),
-        ),
+        E.getOrElse(ESLintResultDecodeErrorMessage),
       )}
     </div>
   )
