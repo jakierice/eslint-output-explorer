@@ -39,7 +39,7 @@ const eslintResultD = D.array(
 
 type ESLintResult = D.TypeOf<typeof eslintResultD>
 
-function renderGroupedFailuresList(
+function makeGroupedFailuresList(
   data: ESLintResult,
 ): Array<{ rule: string; filePaths: Array<string> }> {
   return pipe(
@@ -86,6 +86,30 @@ function renderGroupedFailuresList(
   )
 }
 
+function ESLintFailureCollapsibleItem({
+  rule,
+  filePaths,
+}: {
+  rule: string
+  filePaths: Array<string>
+}) {
+  return (
+    <details key={rule}>
+      <summary>{rule}</summary>
+      <ul>
+        {pipe(
+          filePaths,
+          A.map((path) => (
+            <a href={'vscode://file' + path}>
+              <li>{path}</li>
+            </a>
+          )),
+        )}
+      </ul>
+    </details>
+  )
+}
+
 function App() {
   return (
     <div className="App">
@@ -93,24 +117,7 @@ function App() {
         eslintOutput,
         eslintResultD.decode,
         E.map(
-          flow(
-            renderGroupedFailuresList,
-            A.map(({ rule, filePaths }) => (
-              <details key={rule}>
-                <summary>{rule}</summary>
-                <ul>
-                  {pipe(
-                    filePaths,
-                    A.map((path) => (
-                      <a href={'vscode://file' + path}>
-                        <li>{path}</li>
-                      </a>
-                    )),
-                  )}
-                </ul>
-              </details>
-            )),
-          ),
+          flow(makeGroupedFailuresList, A.map(ESLintFailureCollapsibleItem)),
         ),
         E.getOrElse((decodeErrors) =>
           pipe(decodeErrors, D.draw, (e) => [
