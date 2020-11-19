@@ -91,7 +91,7 @@ function makeGroupedFailuresList(
   )
 }
 
-function ESLintFailureCollapsibleItem({
+function renderESLintFailureCollapsibleItem({
   rule,
   filePaths,
 }: {
@@ -115,15 +115,15 @@ function ESLintFailureCollapsibleItem({
   )
 }
 
-function ESLintFailuresList(result: ESLintResult) {
+function renderESLintFailuresList(result: ESLintResult) {
   return pipe(
     result,
     makeGroupedFailuresList,
-    A.map(ESLintFailureCollapsibleItem),
+    A.map(renderESLintFailureCollapsibleItem),
   )
 }
 
-function ESLintResultDecodeErrorMessage(decodeErrors: D.DecodeError) {
+function renderESLintResultDecodeErrorMessage(decodeErrors: D.DecodeError) {
   return pipe(decodeErrors, D.draw, (e) => [
     <p>{e.split('}]').reverse()[0]}</p>,
   ])
@@ -135,8 +135,8 @@ export function App() {
       {pipe(
         eslintOutput,
         eslintResultD.decode,
-        E.map(ESLintFailuresList),
-        E.getOrElse(ESLintResultDecodeErrorMessage),
+        E.map(renderESLintFailuresList),
+        E.getOrElse(renderESLintResultDecodeErrorMessage),
       )}
     </div>
   )
