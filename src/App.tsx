@@ -105,15 +105,21 @@ function ESLintFailureCollapsibleItem({
   )
 }
 
-function App() {
+function ESLintFailuresList(result: ESLintResult) {
+  return pipe(
+    result,
+    makeGroupedFailuresList,
+    A.map(ESLintFailureCollapsibleItem),
+  )
+}
+
+export function App() {
   return (
     <div className="App">
       {pipe(
         eslintOutput,
         eslintResultD.decode,
-        E.map(
-          flow(makeGroupedFailuresList, A.map(ESLintFailureCollapsibleItem)),
-        ),
+        E.map(ESLintFailuresList),
         E.getOrElse((decodeErrors) =>
           pipe(decodeErrors, D.draw, (e) => [
             <p>{e.split('}]').reverse()[0]}</p>,
