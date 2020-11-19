@@ -1,11 +1,6 @@
-import React from 'react'
 import './App.css'
-import * as E from 'fp-ts/lib/Either'
-import * as Eq from 'fp-ts/lib/Eq'
-import * as O from 'fp-ts/lib/Option'
-import * as A from 'fp-ts/lib/Array'
-import * as D from 'io-ts/lib/Decoder'
-import { constant, flow, identity, pipe } from 'fp-ts/lib/function'
+import React from 'react'
+import { constant, flow, identity, pipe, E, Eq, O, A, D } from './fp-ts-exports'
 
 import eslintOutput from './data/eslint-output.json'
 
