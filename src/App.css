@@ -4,6 +4,7 @@
 
 .App summary {
   padding: 24px;
+  cursor: pointer;
 }
 
 .App-logo {
