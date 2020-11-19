@@ -1,16 +1,6 @@
 import './App.css'
 import React from 'react'
-import {
-  constant,
-  flow,
-  identity,
-  pipe,
-  E,
-  Eq,
-  O,
-  A,
-  D,
-} from './fp-ts-exports'
+import { constant, flow, identity, pipe, E, Eq, O, A, D } from './fp-ts-exports'
 
 import eslintOutput from './data/eslint-output.json'
 
@@ -44,6 +34,21 @@ const eslintResultD = D.array(
 
 type ESLintResult = D.TypeOf<typeof eslintResultD>
 
+function getRuleIdsFromResult(result: ESLintResult) {
+  return pipe(
+    result,
+    A.map(
+      flow(
+        ({ messages }) => O.fromNullable(messages),
+        O.map(A.filterMap(({ ruleId }) => O.fromNullable(ruleId))),
+        O.fold(constant(A.empty), identity),
+      ),
+    ),
+    A.flatten,
+    A.uniq(Eq.eqString),
+  )
+}
+
 function makeGroupedFailuresList(
   data: ESLintResult,
 ): Array<{ rule: string; filePaths: Array<string> }> {
@@ -53,15 +58,7 @@ function makeGroupedFailuresList(
     (result) =>
       pipe(
         result,
-        A.map(
-          flow(
-            ({ messages }) => O.fromNullable(messages),
-            O.map(A.filterMap(({ ruleId }) => O.fromNullable(ruleId))),
-            O.fold(constant(A.empty), identity),
-          ),
-        ),
-        A.flatten,
-        A.uniq(Eq.eqString),
+        getRuleIdsFromResult,
         A.map((rule) => ({
           rule,
           filePaths: pipe(
