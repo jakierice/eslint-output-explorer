@@ -1,6 +1,18 @@
 import './App.css'
 import React from 'react'
-import { constant, flow, identity, pipe, E, Eq, O, A, D } from './fp-ts-exports'
+import {
+  constant,
+  flow,
+  identity,
+  pipe,
+  E,
+  Eq,
+  O,
+  A,
+  D,
+  M,
+  R,
+} from './fp-ts-exports'
 
 import eslintOutput from './data/eslint-output.json'
 
@@ -18,6 +30,8 @@ const esLintResultMessageD = D.partial({
   endLine: D.number,
   endColumn: D.number,
 })
+
+type ESLintResultMessage = D.TypeOf<typeof esLintResultMessageD>
 
 const eslintResultD = D.array(
   pipe(
@@ -49,9 +63,18 @@ function getRuleIdsFromResult(result: ESLintResult) {
   )
 }
 
+const ruleCountsSumMonoid = M.getStructMonoid({
+  errors: M.monoidSum,
+  warnings: M.monoidSum,
+})
+
 function makeGroupedFailuresList(
   data: ESLintResult,
-): Array<{ rule: string; filePaths: Array<string> }> {
+): Array<{
+  rule: string
+  counts: { errors: number; warnings: number }
+  filePaths: Array<string>
+}> {
   return pipe(
     data,
     A.filter((r) => r.errorCount !== 0 || r.warningCount !== 0),
@@ -61,6 +84,29 @@ function makeGroupedFailuresList(
         getRuleIdsFromResult,
         A.map((rule) => ({
           rule,
+          counts: pipe(
+            result,
+            A.map((r) =>
+              pipe(
+                r,
+                ({ messages }) => O.fromNullable(messages),
+                O.fold(
+                  constant(A.empty),
+                  A.map((failure) => ({
+                    errors:
+                      failure.ruleId === rule && failure.severity === 2 ? 1 : 0,
+                    warnings:
+                      failure.ruleId === rule && failure.severity === 1 ? 1 : 0,
+                  })),
+                ),
+              ),
+            ),
+            A.flatten,
+            A.foldMap(ruleCountsSumMonoid)(({ errors, warnings }) => ({
+              errors,
+              warnings,
+            })),
+          ),
           filePaths: pipe(
             result,
             A.map((r) =>
@@ -91,13 +137,28 @@ function makeGroupedFailuresList(
 function renderESLintFailureCollapsibleItem({
   rule,
   filePaths,
+  counts,
 }: {
   rule: string
   filePaths: Array<string>
+  counts: { errors: number; warnings: number }
 }) {
   return (
     <details key={rule}>
-      <summary>{rule}</summary>
+      <summary>
+        {rule}:{' '}
+        {counts.errors !== 0 && (
+          <span className="HighlightedText ErrorText">
+            {counts.errors} Errors
+          </span>
+        )}
+        {counts.warnings !== 0 && (
+          <span className="HighlightedText WarningText">
+            {counts.warnings} Warnings
+          </span>
+        )}
+        throughout {filePaths.length} files
+      </summary>
       <ul>
         {pipe(
           filePaths,
