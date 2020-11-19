@@ -39,59 +39,50 @@ const eslintResultD = D.array(
 
 type ESLintResult = D.TypeOf<typeof eslintResultD>
 
-function renderGroupedFailuresList(data: ESLintResult) {
+function renderGroupedFailuresList(
+  data: ESLintResult,
+): Array<{ rule: string; filePaths: Array<string> }> {
   return pipe(
     data,
     A.filter((r) => r.errorCount !== 0 || r.warningCount !== 0),
-    (result) => (
-      <>
-        {pipe(
-          result,
-          A.map(
-            flow(
-              ({ messages }) => O.fromNullable(messages),
-              O.map(A.filterMap(({ ruleId }) => O.fromNullable(ruleId))),
-              O.fold(constant(A.empty), identity),
-            ),
+    (result) =>
+      pipe(
+        result,
+        A.map(
+          flow(
+            ({ messages }) => O.fromNullable(messages),
+            O.map(A.filterMap(({ ruleId }) => O.fromNullable(ruleId))),
+            O.fold(constant(A.empty), identity),
           ),
-          A.flatten,
-          A.uniq(Eq.eqString),
-          A.map((rule) => (
-            <details key={rule}>
-              <summary>{rule}</summary>
-              <ul>
-                {pipe(
-                  result,
-                  A.map((r) =>
-                    pipe(
-                      r,
-                      ({ messages }) => O.fromNullable(messages),
-                      O.fold(
-                        constant(A.empty),
-                        A.filterMap(
-                          flow(
-                            ({ ruleId }) => O.fromNullable(ruleId),
-                            O.chain(O.fromPredicate((id) => id === rule)),
-                            O.map((_id) => r.filePath),
-                          ),
-                        ),
-                      ),
+        ),
+        A.flatten,
+        A.uniq(Eq.eqString),
+        A.map((rule) => ({
+          rule,
+          filePaths: pipe(
+            result,
+            A.map((r) =>
+              pipe(
+                r,
+                ({ messages }) => O.fromNullable(messages),
+                O.fold(
+                  constant(A.empty),
+                  A.filterMap(
+                    flow(
+                      ({ ruleId }) => O.fromNullable(ruleId),
+                      O.chain(O.fromPredicate((id) => id === rule)),
+                      O.map((_id) => r.filePath),
                     ),
                   ),
-                  A.flatten,
-                  A.uniq(Eq.eqString),
-                  A.map((filePath) => (
-                    <a href={'vscode://file' + filePath} key={filePath}>
-                      <li>{filePath}</li>
-                    </a>
-                  )),
-                )}
-              </ul>
-            </details>
-          )),
-        )}
-      </>
-    ),
+                ),
+              ),
+            ),
+            A.flatten,
+            A.uniq(Eq.eqString),
+            A.map((filePath) => filePath),
+          ),
+        })),
+      ),
   )
 }
 
@@ -101,11 +92,30 @@ function App() {
       {pipe(
         eslintOutput,
         eslintResultD.decode,
-        E.map(renderGroupedFailuresList),
+        E.map(
+          flow(
+            renderGroupedFailuresList,
+            A.map(({ rule, filePaths }) => (
+              <details key={rule}>
+                <summary>{rule}</summary>
+                <ul>
+                  {pipe(
+                    filePaths,
+                    A.map((path) => (
+                      <a href={'vscode://file' + path}>
+                        <li>{path}</li>
+                      </a>
+                    )),
+                  )}
+                </ul>
+              </details>
+            )),
+          ),
+        ),
         E.getOrElse((decodeErrors) =>
-          pipe(decodeErrors, D.draw, (e) => (
-            <p>{e.split('}]').reverse()[0]}</p>
-          )),
+          pipe(decodeErrors, D.draw, (e) => [
+            <p>{e.split('}]').reverse()[0]}</p>,
+          ]),
         ),
       )}
     </div>
