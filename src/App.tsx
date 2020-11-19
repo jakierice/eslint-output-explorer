@@ -1,13 +1,13 @@
-import React from "react"
-import "./App.css"
-import * as E from "fp-ts/lib/Either"
-import * as Eq from "fp-ts/lib/Eq"
-import * as O from "fp-ts/lib/Option"
-import * as A from "fp-ts/lib/Array"
-import * as D from "io-ts/lib/Decoder"
-import { constant, flow, identity, pipe } from "fp-ts/lib/function"
+import React from 'react'
+import './App.css'
+import * as E from 'fp-ts/lib/Either'
+import * as Eq from 'fp-ts/lib/Eq'
+import * as O from 'fp-ts/lib/Option'
+import * as A from 'fp-ts/lib/Array'
+import * as D from 'io-ts/lib/Decoder'
+import { constant, flow, identity, pipe } from 'fp-ts/lib/function'
 
-import eslintOutput from "./data/eslint-output.json"
+import eslintOutput from './data/eslint-output.json'
 
 /* Note: the following types are based on the ESLint dev docs for working with
  * custom formatters found at: https://eslint.org/docs/developer-guide/working-with-custom-formatters
@@ -33,8 +33,8 @@ const eslintResultD = D.array(
       fixableErrorCount: D.number,
       fixableWarningCount: D.number,
     }),
-    D.intersect(D.partial({ messages: D.array(esLintResultMessageD) }))
-  )
+    D.intersect(D.partial({ messages: D.array(esLintResultMessageD) })),
+  ),
 )
 
 type ESLintResult = D.TypeOf<typeof eslintResultD>
@@ -51,8 +51,8 @@ function renderGroupedFailuresList(data: ESLintResult) {
             flow(
               ({ messages }) => O.fromNullable(messages),
               O.map(A.filterMap(({ ruleId }) => O.fromNullable(ruleId))),
-              O.fold(constant(A.empty), identity)
-            )
+              O.fold(constant(A.empty), identity),
+            ),
           ),
           A.flatten,
           A.uniq(Eq.eqString),
@@ -71,28 +71,27 @@ function renderGroupedFailuresList(data: ESLintResult) {
                         A.filterMap(
                           flow(
                             ({ ruleId }) => O.fromNullable(ruleId),
-                            O.chain((id) =>
-                              id === rule ? O.some(r.filePath) : O.none
-                            )
-                          )
-                        )
-                      )
-                    )
+                            O.chain(O.fromPredicate((id) => id === rule)),
+                            O.map((_id) => r.filePath),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   A.flatten,
                   A.uniq(Eq.eqString),
                   A.map((filePath) => (
-                    <a href={"vscode://file" + filePath} key={filePath}>
+                    <a href={'vscode://file' + filePath} key={filePath}>
                       <li>{filePath}</li>
                     </a>
-                  ))
+                  )),
                 )}
               </ul>
             </details>
-          ))
+          )),
         )}
       </>
-    )
+    ),
   )
 }
 
@@ -104,8 +103,10 @@ function App() {
         eslintResultD.decode,
         E.map(renderGroupedFailuresList),
         E.getOrElse((decodeErrors) =>
-          pipe(decodeErrors, D.draw, (e) => <p>{e.split("}]").reverse()[0]}</p>)
-        )
+          pipe(decodeErrors, D.draw, (e) => (
+            <p>{e.split('}]').reverse()[0]}</p>
+          )),
+        ),
       )}
     </div>
   )
